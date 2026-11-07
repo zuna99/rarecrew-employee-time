@@ -141,8 +141,6 @@ GitHub Actions runs the .NET tests on Windows and Ubuntu, and the Angular tests 
 
 On 5 November 2026, the live API returned 821 entries for each key. Under the documented rules, 748 were included and 73 excluded: 43 deleted, 12 without names, and 18 with negative duration. The result was 10 employees, **1,598.47 hours**, and two employees below 100 hours. These are observed results, not assertions baked into the application or tests; upstream data may change.
 
-See [verification notes](docs/verification.md) for the validation environment and browser-review scope.
-
 ## Screenshots
 
 - [C# MVC desktop](docs/screenshots/mvc-desktop.jpg)
