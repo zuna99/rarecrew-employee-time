@@ -141,16 +141,6 @@ GitHub Actions runs the .NET tests on Windows and Ubuntu, and the Angular tests 
 
 On 5 November 2026, the live API returned 821 entries for each key. Under the documented rules, 748 were included and 73 excluded: 43 deleted, 12 without names, and 18 with negative duration. The result was 10 employees, **1,598.47 hours**, and two employees below 100 hours. These are observed results, not assertions baked into the application or tests; upstream data may change.
 
-## Screenshots
-
-- [C# MVC desktop](docs/screenshots/mvc-desktop.jpg)
-- [Angular desktop](docs/screenshots/angular-desktop.jpg)
-- [C# MVC mobile](docs/screenshots/mvc-mobile.jpg)
-- [Angular mobile](docs/screenshots/angular-mobile.jpg)
-- [C# mobile chart](docs/screenshots/mvc-mobile-chart.jpg)
-- [Angular mobile chart](docs/screenshots/angular-mobile-chart.jpg)
-- [C# generated PNG](docs/screenshots/employee-time.png)
-
 ## Troubleshooting
 
 - **`dotnet` is not recognized:** install the SDK, restart the terminal, and check `dotnet --info`.
@@ -170,4 +160,4 @@ On 5 November 2026, the live API returned 821 entries for each key. Under the do
 - [ScottPlot pie charts](https://scottplot.net/cookbook/5/Pie/)
 - [Chart.js pie charts](https://www.chartjs.org/docs/latest/charts/doughnut.html)
 
-The project uses .NET 10, Angular 22, ScottPlot 5, Chart.js 4, xUnit, and Vitest. Lockfiles are included for repeatable dependency installation. Third-party packages retain their respective licenses. Employer-provided PDFs, emails, key files, and full API response files are excluded from this repository.
+The project uses .NET 10, Angular 24, ScottPlot 5, Chart.js 4, xUnit, and Vitest. Lockfiles are included for repeatable dependency installation. Third-party packages retain their respective licenses.
