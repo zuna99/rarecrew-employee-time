@@ -1,0 +1,151 @@
+{
+  "entries": [
+    {
+      "Id": "1",
+      "EmployeeName": "Alex",
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-03T02:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "2",
+      "EmployeeName": " Alex ",
+      "StarTimeUtc": "2026-01-04T00:00:00",
+      "EndTimeUtc": "2026-01-06T02:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "3",
+      "EmployeeName": "Blair",
+      "StarTimeUtc": "2026-01-01T00:00:00Z",
+      "EndTimeUtc": "2026-01-05T04:00:00Z",
+      "DeletedOn": null
+    },
+    {
+      "Id": "4",
+      "EmployeeName": "Casey",
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-05T03:59:59",
+      "DeletedOn": null
+    },
+    {
+      "Id": "5",
+      "EmployeeName": "Dana",
+      "StarTimeUtc": "2026-01-01T23:30:00",
+      "EndTimeUtc": "2026-01-02T02:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "6",
+      "EmployeeName": "Eli",
+      "StarTimeUtc": "2026-01-01T12:00:00",
+      "EndTimeUtc": "2026-01-01T12:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "7",
+      "EmployeeName": "Fay",
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-01T00:01:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "8",
+      "EmployeeName": "Fay",
+      "StarTimeUtc": "2026-01-01T00:02:00",
+      "EndTimeUtc": "2026-01-01T00:03:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "9",
+      "EmployeeName": "Gale",
+      "StarTimeUtc": "2026-01-01T01:00:00+01:00",
+      "EndTimeUtc": "2026-01-01T02:00:00Z",
+      "DeletedOn": null
+    },
+    {
+      "Id": "10",
+      "EmployeeName": "Deleted Person",
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-10T00:00:00",
+      "DeletedOn": "2026-01-11T00:00:00"
+    },
+    {
+      "Id": "11",
+      "EmployeeName": null,
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-02T00:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "12",
+      "EmployeeName": "  ",
+      "StarTimeUtc": "2026-01-01T00:00:00",
+      "EndTimeUtc": "2026-01-02T00:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "13",
+      "EmployeeName": "Invalid",
+      "StarTimeUtc": "not-a-date",
+      "EndTimeUtc": "2026-01-02T00:00:00",
+      "DeletedOn": null
+    },
+    {
+      "Id": "14",
+      "EmployeeName": "Negative",
+      "StarTimeUtc": "2026-01-02T00:00:00",
+      "EndTimeUtc": "2026-01-01T00:00:00",
+      "DeletedOn": null
+    },
+    null
+  ],
+  "expected": {
+    "employees": [
+      {
+        "name": "Alex",
+        "totalHours": 100,
+        "isBelowThreshold": false
+      },
+      {
+        "name": "Blair",
+        "totalHours": 100,
+        "isBelowThreshold": false
+      },
+      {
+        "name": "Casey",
+        "totalHours": 99.99972222222222,
+        "isBelowThreshold": true
+      },
+      {
+        "name": "Dana",
+        "totalHours": 2.5,
+        "isBelowThreshold": true
+      },
+      {
+        "name": "Gale",
+        "totalHours": 2,
+        "isBelowThreshold": true
+      },
+      {
+        "name": "Fay",
+        "totalHours": 0.03333333333333333,
+        "isBelowThreshold": true
+      },
+      {
+        "name": "Eli",
+        "totalHours": 0,
+        "isBelowThreshold": true
+      }
+    ],
+    "quality": {
+      "received": 15,
+      "accepted": 9,
+      "excluded": 6,
+      "deleted": 1,
+      "missingNames": 2,
+      "invalidTimestamps": 2,
+      "negativeDurations": 1
+    }
+  }
+}

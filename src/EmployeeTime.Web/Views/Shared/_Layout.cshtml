@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Employee working hours and each employee's share of total recorded time." />
+    <title>Employee time overview | TimeLedger</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to report</a>
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="TimeLedger home"><span class="brand-mark" aria-hidden="true">t.</span>TimeLedger</a>
+        <span class="implementation">C# / MVC</span>
+    </header>
+    <main id="main" class="page">@RenderBody()</main>
+    <footer class="site-footer"><span>TimeLedger <span aria-hidden="true">/</span> Employee time report</span><span>All recorded entries · UTC</span></footer>
+</body>
+</html>

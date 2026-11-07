@@ -1,0 +1,173 @@
+<a href="#main" class="skip-link">Skip to report</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="TimeLedger home"
+    ><span class="brand-mark" aria-hidden="true">t.</span>TimeLedger</a
+  ><span class="implementation">ANGULAR</span>
+</header>
+<main id="main" class="page">
+  <section class="page-heading">
+    <div>
+      <p class="eyebrow">THE BIG PICTURE</p>
+      <h1>Employee time overview<span class="accent">.</span></h1>
+      <p class="intro">Time worked, by employee. One clear view of every recorded hour.</p>
+    </div>
+    <button
+      class="button button-secondary"
+      (click)="loadReport()"
+      [disabled]="state().status === 'loading'"
+    >
+      Refresh report <span aria-hidden="true">↻</span>
+    </button>
+  </section>
+  @let current = state();
+  @if (current.status === 'loading') {
+    <section class="state-panel" role="status" aria-live="polite">
+      <span class="loading-dot" aria-hidden="true"></span>
+      <h2>Gathering the hours…</h2>
+      <p>Loading employee time entries.</p>
+    </section>
+  } @else if (current.status === 'error') {
+    <section class="state-panel" role="alert">
+      <p class="eyebrow">REPORT UNAVAILABLE</p>
+      <h2>We couldn’t load the report.</h2>
+      <p>{{ current.message }}</p>
+      <button class="button" (click)="loadReport()">Try again</button>
+    </section>
+  } @else {
+    @let report = current.report;
+    <section class="stats" aria-label="Report summary">
+      <article class="stat">
+        <p>Total time worked</p>
+        <div>
+          <strong>{{ report.totalHours | number: '1.2-2' }}</strong
+          ><span>hours</span>
+        </div>
+        <small>Across all included entries</small>
+      </article>
+      <article class="stat">
+        <p>Employees</p>
+        <div>
+          <strong>{{ report.employees.length | number: '2.0-0' }}</strong
+          ><span>people</span>
+        </div>
+        <small>With valid time records</small>
+      </article>
+      <article class="stat stat-attention">
+        <p>Below 100 hours</p>
+        <div>
+          <strong>{{ report.belowThresholdCount | number: '2.0-0' }}</strong
+          ><span>employees</span>
+        </div>
+        <small>Highlighted in the table below</small>
+      </article>
+    </section>
+    @if (report.employees.length === 0) {
+      <section class="state-panel">
+        <h2>No working time to display.</h2>
+        <p>The provider returned no entries with an employee name and valid times.</p>
+      </section>
+    } @else {
+      <div class="report-grid">
+        <section class="panel" aria-labelledby="employees-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">01 / EMPLOYEES</p>
+              <h2 id="employees-title">Time breakdown</h2>
+            </div>
+            <span class="subtle">Most hours first</span>
+          </div>
+          <div class="table-scroll" role="region" aria-label="Employee working hours" tabindex="0">
+            <table>
+              <caption class="sr-only">
+                Employees sorted by total hours, highest first. Rows below 100 hours are
+                highlighted.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Employee</th>
+                  <th scope="col" class="numeric">Total hours</th>
+                  <th scope="col" class="numeric">Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (employee of report.employees; track employee.name) {
+                  <tr [class.below-threshold]="employee.isBelowThreshold">
+                    <th scope="row">
+                      <span class="employee-name">{{ employee.name }}</span>
+                      @if (employee.isBelowThreshold) {
+                        <span class="threshold-label">Below 100 hours</span>
+                      }
+                    </th>
+                    <td class="numeric hours">{{ employee.totalHours | number: '1.2-2' }}</td>
+                    <td class="numeric share">{{ employee.sharePercent | number: '1.1-1' }}%</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td class="numeric">{{ report.totalHours | number: '1.2-2' }}</td>
+                  <td class="numeric">{{ report.totalHours > 0 ? '100%' : '0%' }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="panel-note">
+            <span class="highlight-key" aria-hidden="true"></span>Highlighted rows have fewer than
+            100 total hours.
+          </p>
+        </section>
+        <section class="panel chart-panel" aria-labelledby="chart-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">02 / DISTRIBUTION</p>
+              <h2 id="chart-title">Share of total time</h2>
+            </div>
+            <span class="tag">PIE CHART</span>
+          </div>
+          @if (report.totalHours > 0) {
+            <figure class="chart-figure">
+              <app-pie-chart [employees]="report.employees" />
+              <figcaption>Each slice represents an employee’s percentage of the total.</figcaption>
+            </figure>
+            <div class="chart-action">
+              <span class="subtle">Hover over a slice to explore the hours.</span>
+            </div>
+          } @else {
+            <div class="chart-empty">
+              <h3>No positive hours yet</h3>
+              <p>A pie chart will appear when the total time is greater than zero.</p>
+            </div>
+          }
+        </section>
+      </div>
+    }
+    <details class="data-quality">
+      <summary>
+        About this report
+        <span
+          >{{ report.quality.accepted }} of {{ report.quality.received }} entries included ·
+          {{ report.quality.excluded }} excluded</span
+        >
+      </summary>
+      <div>
+        <p>
+          Deleted entries ({{ report.quality.deleted }}), entries without a name ({{
+            report.quality.missingNames
+          }}), invalid timestamps ({{ report.quality.invalidTimestamps }}), and negative durations
+          ({{ report.quality.negativeDurations }}) are excluded. Each excluded entry is counted
+          once.
+        </p>
+        <p>
+          Times are interpreted as UTC. Names are trimmed and grouped by exact name. Totals use full
+          precision; hours display two decimal places and shares display one. Displayed values may
+          not add up exactly because of rounding.
+        </p>
+      </div>
+    </details>
+  }
+</main>
+<footer class="site-footer">
+  <span>TimeLedger <span aria-hidden="true">/</span> Employee time report</span
+  ><span>All recorded entries · UTC</span>
+</footer>

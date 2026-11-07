@@ -1,0 +1,166 @@
+@using System.Globalization
+@using EmployeeTime.Web.Services
+@model DashboardViewModel
+@{
+    var culture = CultureInfo.InvariantCulture;
+}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">THE BIG PICTURE</p>
+        <h1>Employee time overview<span class="accent">.</span></h1>
+        <p class="intro">Time worked, by employee. One clear view of every recorded hour.</p>
+    </div>
+    <a href="/" class="button button-secondary">Refresh report <span aria-hidden="true">↻</span></a>
+</section>
+@if (Model.Error is not null)
+{
+    <section class="state-panel" role="alert">
+        <p class="eyebrow">REPORT UNAVAILABLE</p>
+        <h2>We couldn’t load the report.</h2>
+        <p>@Model.Error</p>
+        <a href="/" class="button">Try again</a>
+    </section>
+}
+else if (Model.Report is { } report)
+{
+    <section class="stats" aria-label="Report summary">
+        <article class="stat">
+            <p>Total time worked</p>
+            <div><strong>@report.TotalHours.ToString("N2", culture)</strong><span>hours</span></div>
+            <small>Across all included entries</small>
+        </article>
+        <article class="stat">
+            <p>Employees</p>
+            <div><strong>@report.Employees.Count.ToString("D2")</strong><span>people</span></div>
+            <small>With valid time records</small>
+        </article>
+        <article class="stat stat-attention">
+            <p>Below 100 hours</p>
+            <div><strong>@report.BelowThresholdCount.ToString("D2")</strong><span>employees</span></div>
+            <small>Highlighted in the table below</small>
+        </article>
+    </section>
+    @if (report.Employees.Count == 0)
+    {
+        <section class="state-panel">
+            <h2>No working time to display.</h2>
+            <p>The provider returned no entries with an employee name and valid times.</p>
+        </section>
+    }
+    else
+    {
+        <div class="report-grid">
+            <section class="panel" aria-labelledby="employees-title">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">01 / EMPLOYEES</p>
+                        <h2 id="employees-title">Time breakdown</h2>
+                    </div>
+                    <span class="subtle">Most hours first</span>
+                </div>
+                <div class="table-scroll" role="region" aria-label="Employee working hours" tabindex="0">
+                    <table>
+                        <caption class="sr-only">Employees sorted by total hours, highest first. Rows below 100 hours are highlighted.</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Employee</th>
+                                <th scope="col" class="numeric">Total hours</th>
+                                <th scope="col" class="numeric">Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var employee in report.Employees)
+                        {
+                            <tr class="@(employee.IsBelowThreshold ? "below-threshold" : null)">
+                                <th scope="row">
+                                    <span class="employee-name">@employee.Name</span>
+                                    @if (employee.IsBelowThreshold)
+                                    {
+                                        <span class="threshold-label">Below 100 hours</span>
+                                    }
+                                </th>
+                                <td class="numeric hours">@employee.TotalHours.ToString("N2", culture)</td>
+                                <td class="numeric share">@employee.SharePercent.ToString("0.0", culture)%</td>
+                            </tr>
+                        }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th scope="row">Total</th>
+                                <td class="numeric">@report.TotalHours.ToString("N2", culture)</td>
+                                <td class="numeric">@(report.TotalHours > 0 ? "100%" : "0%")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p class="panel-note">
+                    <span class="highlight-key" aria-hidden="true"></span>
+                    Highlighted rows have fewer than 100 total hours.
+                </p>
+            </section>
+            <section class="panel chart-panel" aria-labelledby="chart-title">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">02 / DISTRIBUTION</p>
+                        <h2 id="chart-title">Share of total time</h2>
+                    </div>
+                    <span class="tag">PIE CHART</span>
+                </div>
+                @if (Model.ChartDownloadUrl is not null)
+                {
+                    <figure class="chart-figure">
+                        <div class="chart-layout">
+                            <div class="canvas-container">
+                                <img class="pie-preview" src="@Model.PreviewDataUri" width="720" height="720"
+                                     alt="Pie chart of each employee’s share of total working time. Values are listed in the legend and employee table." />
+                            </div>
+                            <ul class="chart-legend" aria-label="Chart values">
+                            @for (int index = 0; index < report.Employees.Count; index++)
+                            {
+                                var employee = report.Employees[index];
+                                <li>
+                                    <span class="legend-dot" style="background-color:@PieChartRendererService.ColorForIndex(index)" aria-hidden="true"></span>
+                                    <span>@employee.Name</span>
+                                    <strong>@employee.SharePercent.ToString("0.0", culture)%</strong>
+                                </li>
+                            }
+                            </ul>
+                        </div>
+                        <figcaption>Each slice represents an employee’s percentage of the total.</figcaption>
+                    </figure>
+                    <div class="chart-action">
+                        <span class="subtle">Generated in C# · PNG</span>
+                        <a class="button button-secondary" href="@Model.ChartDownloadUrl">
+                            Download PNG <span aria-hidden="true">↓</span>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="chart-empty">
+                        <h3>No positive hours yet</h3>
+                        <p>A pie chart will appear when the total time is greater than zero.</p>
+                    </div>
+                }
+            </section>
+        </div>
+    }
+    <details class="data-quality">
+        <summary>
+            About this report
+            <span>@report.Quality.Accepted of @report.Quality.Received entries included · @report.Quality.Excluded excluded</span>
+        </summary>
+        <div>
+            <p>
+                Deleted entries (@report.Quality.Deleted), entries without a name (@report.Quality.MissingNames),
+                invalid timestamps (@report.Quality.InvalidTimestamps), and negative durations
+                (@report.Quality.NegativeDurations) are excluded. Each excluded entry is counted once.
+            </p>
+            <p>
+                Times are interpreted as UTC. Names are trimmed and grouped by exact name. Totals use full
+                precision; hours display two decimal places and shares display one. Displayed values may
+                not add up exactly because of rounding.
+            </p>
+        </div>
+    </details>
+}
