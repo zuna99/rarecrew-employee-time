@@ -4,8 +4,6 @@ Two implementations of the Rare Crew employee-time assignment: a C# ASP.NET Core
 
 The MVC HTML table and both PNG chart images are generated on the server in C#. No JavaScript is needed for the MVC report or its PNG download. Angular independently calculates its report in TypeScript and renders its chart with Chart.js.
 
-![C# MVC employee report](docs/screenshots/mvc-desktop.jpg)
-
 ## Run locally
 
 ### Prerequisites
@@ -18,7 +16,7 @@ Commands below run from the repository root, unless a different directory is sho
 
 ### 1. Set the supplied keys locally
 
-Use the value after `Round 1:` in each supplied key file. The C# and Angular settings are intentionally separate, even if their current values happen to match.
+Use the supplied API key for each implementation. Replace the placeholders below with the actual values. The C# and Angular settings are separate, even if their values happen to match.
 
 ```sh
 dotnet user-secrets set "TimeEntries:CSharpApiKey" "PASTE_CSHARP_KEY" --project src/EmployeeTime.Web
@@ -34,7 +32,7 @@ dotnet restore EmployeeTime.sln --locked-mode -m:1
 dotnet run --project src/EmployeeTime.Web --launch-profile http
 ```
 
-Open **http://localhost:5080**. Select **Download PNG** to save a standalone 1200 × 760 image containing the pie chart, employee names, and percentages. The download and table use the same fetched dataset. Download links remain available for 10 minutes; refresh the report if one has expired. The page also uses a 720 × 720 C#-generated preview, with a responsive HTML legend for smaller screens.
+Open **http://localhost:5080**. Select **Download PNG** to save a standalone 1200 × 760 image containing the pie chart, employee names, and percentages. The download and table use the same fetched dataset. Reports are cached in the running server's memory with a 10-minute expiration; links can stop working sooner if the server restarts or the cache entry is evicted. Refresh the report if a link has expired. The page also uses a 720 × 720 C#-generated preview, with a responsive HTML legend.
 
 ### 3. Start Angular in a second terminal
 
@@ -81,7 +79,7 @@ flowchart TD
 
 - **API boundary:** `TimeEntriesClientService` handles HTTP, JSON, timeout, cancellation, and safe provider errors. `ITimeEntriesClientService` lets integration tests substitute controlled responses without hitting the real provider.
 - **Business rules:** `EmployeeTimeCalculatorService` is a pure calculation with no HTTP or UI dependency. The Angular equivalent is also a pure function.
-- **Presentation:** Razor formats values and highlights rows; the controller coordinates the request. ScottPlot generates PNG bytes in memory. A C# file endpoint returns the download with an attachment filename. The generated download is kept in memory for 10 minutes under a per-report ID, so it matches the displayed table without another provider fetch. An expired link returns a clear 404 response asking the user to refresh. The preview image is embedded as a data URI.
+- **Presentation:** Razor formats values and highlights rows; the controller coordinates the request. ScottPlot generates PNG bytes in memory. The calculated report is cached under a per-report ID with a 10-minute expiration. A C# file endpoint renders the full-size PNG from that cached report when requested and returns it with an attachment filename, without another provider fetch. A missing or expired cache entry returns a clear 404 response asking the user to refresh. The preview image is rendered with the page and embedded as a data URI.
 - **Angular state:** a discriminated union distinguishes loading, error, and loaded states. A separate component owns and disposes of Chart.js instances.
 - **Configuration:** only the server sees the keys. HTTP-client URL logging is disabled because the upstream API requires a query-string key. Provider response bodies and raw transport exceptions are not exposed to users.
 
@@ -109,9 +107,9 @@ The assignment leaves data-cleaning rules unspecified. These are explicit assump
 
 1. Exclude any entry with a non-null `DeletedOn`.
 2. Trim names and exclude null, empty, or whitespace-only names. Group by the remaining **exact, case-sensitive name**, because the API supplies no employee identifier. Different people with the same name cannot be distinguished reliably.
-3. Require valid ISO calendar timestamps with seconds, optional fractional seconds, and an optional UTC marker or numeric offset. Interpret timestamps without an offset as UTC, as the API's field names indicate. Reject impossible calendar dates rather than allowing browser date normalization.
+3. Require valid ISO calendar timestamps with seconds, an optional fractional part containing one to seven digits, and an optional `Z` UTC marker or numeric offset. Interpret timestamps without an offset as UTC, as the API's field names indicate. Reject impossible calendar dates rather than allowing browser date normalization.
 4. Calculate elapsed time as end minus start. Exclude negative durations; do not take their absolute value or swap times. Accept zero duration and multi-day records.
-5. Add all valid durations before converting to display values. There is no rounding per time entry. C# sums integer ticks; Angular sums integer milliseconds. Both convert employee totals to hours only after aggregation, so repeated fractional-hour sessions cannot distort the 100-hour boundary. JavaScript timestamp precision is milliseconds; the supplied data uses whole seconds.
+5. Add all valid durations before converting to display values. C# sums integer ticks; Angular sums integer milliseconds. Both convert employee totals to hours only after aggregation, avoiding rounding each entry to fractional hours before applying the 100-hour boundary. Angular's timestamp parsing discards submillisecond precision, while C# retains up to seven fractional digits; results can therefore differ for inputs with submillisecond timestamps.
 6. Sort by hours descending; sort tied names using ordinal comparison. Compare the unrounded total against **strictly less than 100 hours**. Exactly 100 is not highlighted. A total just below 100 may display as `100.00` and still be correctly highlighted.
 7. Calculate share as `employee hours / all included hours × 100`. Show hours to two decimal places and shares to one. Display rounding can make visible percentages differ slightly from 100% in total.
 8. With no valid records, show an empty state. With valid records totaling zero, show the table and an explanation instead of inventing a pie chart.
@@ -126,7 +124,9 @@ From the repository root:
 dotnet test EmployeeTime.sln --configuration Release --no-restore -m:1
 ```
 
-From `apps/angular`:
+The command above assumes the restore step in the local setup has completed. It builds the solution in Release configuration before running the tests.
+
+From `apps/angular`, after `npm ci`:
 
 ```sh
 npm test
@@ -135,11 +135,7 @@ npm run build
 
 Tests use synthetic data and need no real API keys. They cover grouping, name trimming, deterministic ties, UTC/offset interpretation, multi-day and zero durations, deleted/missing/invalid records, impossible dates, exact threshold behavior (including 300 twenty-minute sessions totaling exactly 100 hours), delayed rounding, and percentage totals. HTTP-client tests cover source-key selection, malformed responses, provider errors, timeouts, cancellation, and safe errors. MVC integration tests exercise real routing, Razor HTML, name escaping, empty/error states, and decoding a generated PNG with its expected dimensions and attachment response headers. A missing chart ID returns 404 without making a provider request. Angular tests cover the HTTP boundary and loading, retry, empty, zero, and escaped-name states.
 
-GitHub Actions runs the .NET tests on Windows and Ubuntu, and the Angular tests and production build on Ubuntu. The workflow is included; its hosted run is only available after pushing the repository.
-
-### Verification snapshot
-
-On 5 November 2026, the live API returned 821 entries for each key. Under the documented rules, 748 were included and 73 excluded: 43 deleted, 12 without names, and 18 with negative duration. The result was 10 employees, **1,598.47 hours**, and two employees below 100 hours. These are observed results, not assertions baked into the application or tests; upstream data may change.
+The included GitHub Actions workflow is configured to run the .NET tests on Windows and Ubuntu, and the Angular tests and production build on Ubuntu, on pushes and pull requests. Check the repository's Actions tab for actual hosted run results.
 
 ## Troubleshooting
 
@@ -160,4 +156,4 @@ On 5 November 2026, the live API returned 821 entries for each key. Under the do
 - [ScottPlot pie charts](https://scottplot.net/cookbook/5/Pie/)
 - [Chart.js pie charts](https://www.chartjs.org/docs/latest/charts/doughnut.html)
 
-The project uses .NET 10, Angular 24, ScottPlot 5, Chart.js 4, xUnit, and Vitest. Lockfiles are included for repeatable dependency installation. Third-party packages retain their respective licenses.
+The project uses .NET 10, Angular 22, ScottPlot 5, Chart.js 4, xUnit, and Vitest. Lockfiles are included for repeatable dependency installation. Third-party packages retain their respective licenses.

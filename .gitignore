@@ -16,3 +16,6 @@
 *.suo
 *Keys.txt
 tmp/
+
+# Keep screenshots of provider data out of future commits.
+/docs/screenshots/
